@@ -1,0 +1,26 @@
+[package]
+name = "hoyo-rs"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Hoyo-lab API wrapper"
+keywords = ["genshin", "api", "async"]
+
+[dependencies]
+maybe-async = "0.2"
+reqwest = { version = "0.12", features = ["json"], default-features = false}
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+
+[dev-dependencies]
+dotenv = "0.15"
+tokio = { version = "1.8.4", features = ["rt-multi-thread", "macros"] }
+tokio-test = "0.4"
+
+[features]
+default = ["native-tls"]
+rustls = ["reqwest/rustls-tls"]
+native-tls = ["reqwest/native-tls"]
+blocking = ["maybe-async/is_sync", "reqwest/blocking"]
+
