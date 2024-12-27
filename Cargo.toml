@@ -7,6 +7,7 @@ description = "Hoyo-lab API wrapper"
 keywords = ["genshin", "api", "async"]
 
 [dependencies]
+anyhow = "1.0.94"
 maybe-async = "0.2"
 reqwest = { version = "0.12", features = ["json"], default-features = false}
 serde = { version = "1.0", features = ["derive"] }
