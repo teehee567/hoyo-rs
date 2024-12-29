@@ -1,4 +1,8 @@
-use crate::{common::Region, models::auth::cookie::{CNWebLoginResult, WebLoginResult}, HoyoError};
+use crate::{
+    utils::common::Region,
+    models::auth::cookie::{CNWebLoginResult, WebLoginResult},
+    HoyoError,
+};
 
 mod app;
 mod game;
@@ -16,16 +20,20 @@ impl AuthClient {
         account: &str,
         password: &str,
     ) -> Result<WebLoginResult, HoyoError> {
-        match self.region {
-            Region::Chinese => return self.cn_login_with_password(),
-            Region::Overseas => {}
-        }
+        // match self.region {
+        //     Region::Chinese => return self.cn_login_with_password(),
+        //     Region::Overseas => {}
+        // }
 
         todo!()
     }
 
     #[maybe_async::maybe_async]
-    async fn cn_login_with_password(&self, account: &str, password: &str) -> Result<CNWebLoginResult, HoyoError>{
-        
+    async fn cn_login_with_password(
+        &self,
+        account: &str,
+        password: &str,
+    ) -> Result<CNWebLoginResult, HoyoError> {
+        todo!()
     }
 }

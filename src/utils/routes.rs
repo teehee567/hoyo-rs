@@ -1,4 +1,5 @@
-use crate::common::{Game, Region};
+use crate::utils::common::{Region, Game};
+
 macro_rules! international_route {
     ($name:ident, $overseas:expr, $chinese:expr) => {
         pub const fn $name(region: Region) -> &'static str {

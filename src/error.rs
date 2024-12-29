@@ -1,42 +1,39 @@
+
 use thiserror::Error;
 
+/// HoyoApi Error
 #[derive(Debug, Error)]
 pub enum HoyoError {
+
+    /// Could not parse language from str.
+    #[error("Could not parse language")]
+    LanguageParse,
+
+    /// Hoyolab Response Error
     #[error(transparent)]
     Hoyolab(#[from] HoyolabError),
 
-    // Redemption Errors
-    #[error(transparent)]
-    Redemption(#[from] RedemptionError),
-
-    // Account Errors
-    #[error(transparent)]
-    Account(#[from] AccountError),
-
-    // Account Errors
-    #[error(transparent)]
-    Daily(#[from] DailyError),
-
-    // External Errors
+    /// Reqwest Errors
     #[error("Reqwest error: {0}")]
     ReqwestError(#[from] reqwest::Error),
 
+    /// Serde Error
     #[error("Serde error: {0}")]
     SerdeError(#[from] serde_json::Error),
-
-    // Unknown error
-    #[error("Unknown error code: {0}")]
-    UnknownError(i32),
 }
 
+/// Errors from Hoyolab Response.
 #[derive(Debug, Error)]
 pub enum HoyolabError {
+    /// Invalid Cookies.
     #[error("Invalid cookies.")]
     InvalidCookies,
 
+    /// Invalid Lanuage from Hoyolab
     #[error("Invalid language.")]
     InvalidLanguage,
 
+    /// 
     #[error("Visits too frequently.")]
     VisitsTooFrequently,
 
@@ -75,10 +72,7 @@ pub enum HoyolabError {
 
     #[error("Geetest Triggered")]
     Captcha,
-}
 
-#[derive(Debug, Error)]
-pub enum RedemptionError {
     #[error("Redemption invalid.")]
     RedemptionInvalid,
 
@@ -102,11 +96,7 @@ pub enum RedemptionError {
 
     #[error("Cannot claim codes for accounts with adventure rank lower than 10.")]
     RedemptionAdventureRankTooLow,
-}
 
-
-#[derive(Debug, Error)]
-pub enum AccountError {
     #[error("Account login failed.")]
     AccountLoginFail,
 
@@ -127,12 +117,13 @@ pub enum AccountError {
 
     #[error("Request too frequent.")]
     RequestTooFrequent,
-}
 
-#[derive(Debug, Error)]
-pub enum DailyError {
     #[error("Already claimed.")]
     AlreadyClaimed,
+
+    // Unknown error
+    #[error("Unknown error code: {0}")]
+    UnknownError(i32),
 }
 
 
@@ -162,40 +153,40 @@ impl HoyoError {
             -502002 => HoyoError::Hoyolab(HoyolabError::InvalidLanguage),
 
             // Redemption Errors
-            -1065 => HoyoError::Redemption(RedemptionError::RedemptionInvalid),
+            -1065 => HoyoError::Hoyolab(HoyolabError::RedemptionInvalid),
             -1071 => HoyoError::Hoyolab(HoyolabError::InvalidCookies),
             -1073 => HoyoError::Hoyolab(HoyolabError::AccountNotFound),
-            -2001 => HoyoError::Redemption(RedemptionError::RedemptionCodeExpired),
-            -2003 => HoyoError::Redemption(RedemptionError::RedemptionCodeMalformed),
-            -2004 => HoyoError::Redemption(RedemptionError::RedemptionInvalid),
-            -2014 => HoyoError::Redemption(RedemptionError::RedemptionCodeNotActivated),
-            -2016 => HoyoError::Redemption(RedemptionError::RedemptionCooldown),
-            -2017 | -2018 => HoyoError::Redemption(RedemptionError::RedemptionClaimed),
-            -2021 => HoyoError::Redemption(RedemptionError::RedemptionAdventureRankTooLow),
+            -2001 => HoyoError::Hoyolab(HoyolabError::RedemptionCodeExpired),
+            -2003 => HoyoError::Hoyolab(HoyolabError::RedemptionCodeMalformed),
+            -2004 => HoyoError::Hoyolab(HoyolabError::RedemptionInvalid),
+            -2014 => HoyoError::Hoyolab(HoyolabError::RedemptionCodeNotActivated),
+            -2016 => HoyoError::Hoyolab(HoyolabError::RedemptionCooldown),
+            -2017 | -2018 => HoyoError::Hoyolab(HoyolabError::RedemptionClaimed),
+            -2021 => HoyoError::Hoyolab(HoyolabError::RedemptionAdventureRankTooLow),
 
             // Rewards Errors
-            -5003 => HoyoError::Daily(DailyError::AlreadyClaimed),
+            -5003 => HoyoError::Hoyolab(HoyolabError::AlreadyClaimed),
 
             // Chinese Errors
             1008 => HoyoError::Hoyolab(HoyolabError::AccountNotFound),
             -1104 => HoyoError::Hoyolab(HoyolabError::ActionMustBeInApp),
 
             // Account Errors
-            -3208 => HoyoError::Account(AccountError::AccountLoginFail),
-            -3202 => HoyoError::Account(AccountError::AccountHasLocked),
-            -3203 => HoyoError::Account(AccountError::AccountDoesNotExist),
-            -3205 => HoyoError::Account(AccountError::WrongOTP),
-            -3206 => HoyoError::Account(AccountError::VerificationCodeRateLimited),
+            -3208 => HoyoError::Hoyolab(HoyolabError::AccountLoginFail),
+            -3202 => HoyoError::Hoyolab(HoyolabError::AccountHasLocked),
+            -3203 => HoyoError::Hoyolab(HoyolabError::AccountDoesNotExist),
+            -3205 => HoyoError::Hoyolab(HoyolabError::WrongOTP),
+            -3206 => HoyoError::Hoyolab(HoyolabError::VerificationCodeRateLimited),
 
             // Miyoushe Errors
-            -119 => HoyoError::Account(AccountError::OTPRateLimited),
-            -3006 => HoyoError::Account(AccountError::RequestTooFrequent),
+            -119 => HoyoError::Hoyolab(HoyolabError::OTPRateLimited),
+            -3006 => HoyoError::Hoyolab(HoyolabError::RequestTooFrequent),
 
             // Game Login Errors
             -216 => HoyoError::Hoyolab(HoyolabError::IncorrectGameAccount),
             -202 => HoyoError::Hoyolab(HoyolabError::IncorrectGamePassword),
 
-            _ => HoyoError::UnknownError(code),
+            _ => HoyoError::Hoyolab(HoyolabError::UnknownError(code)),
         }
     }
 }
