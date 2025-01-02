@@ -6,6 +6,8 @@ use crate::{
     HoyoError,
 };
 
+
+#[derive()]
 pub enum Lang {
     ZhCn,
     ZhTw,
@@ -25,6 +27,7 @@ pub enum Lang {
 }
 
 impl Lang {
+    /// get string val
     pub const fn val(&self) -> &'static str {
         match self {
             Self::ZhCn => "zh-cn",
@@ -43,6 +46,27 @@ impl Lang {
             Self::ViVn => "vi-vn",
             Self::TrTr => "tr-tr",
         }
+    }
+    /// 2 letter language code.
+    pub const fn val_2l(&self) -> &'static str {
+        match self {
+            Self::ZhCn => "zh",
+            Self::ZhTw => "zh",
+            Self::DeDe => "de",
+            Self::EnUs => "en",
+            Self::EsEs => "es",
+            Self::FrFr => "fr",
+            Self::IdId => "id",
+            Self::ItIt => "it",
+            Self::JaJp => "ja",
+            Self::KoKr => "ko",
+            Self::PtPt => "pt",
+            Self::RuRu => "ru",
+            Self::ThTh => "th",
+            Self::ViVn => "vi",
+            Self::TrTr => "tr",
+        }
+
     }
 }
 

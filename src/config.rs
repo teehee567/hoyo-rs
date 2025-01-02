@@ -1,4 +1,8 @@
-#[derive(Debug, Clone)]
+use crate::utils::common::Region;
+
+
+
+#[derive(Default, Debug, Clone)]
 pub struct Config {
     pub user_agent: String,
     pub client_id: String,
@@ -9,8 +13,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(user_agent: &str, client_id: &str, client_secret: &str) -> Config {
-        Config {
+    pub fn new(user_agent: &str, client_id: &str, client_secret: &str) -> Self {
+        Self {
             user_agent: user_agent.to_owned(),
             client_id: client_id.to_owned(),
             client_secret: client_secret.to_owned(),

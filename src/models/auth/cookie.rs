@@ -1,69 +1,70 @@
+use serde::Deserialize;
+
 /// Result from fetching `stoken` with `fetch_stoken_by_game_token`.
+#[derive(Deserialize)]
 pub struct STokenResult {
-    aid: String,
-    mid: String,
-    token: String,
+    pub aid: String,
+    pub mid: String,
+    pub token: String,
 }
 
 /// QR code login cookies.
+#[derive(Deserialize)]
 pub struct QRLoginResult {
-    cookie_token_v2: String,
-    account_mid_v2: String,
-    account_id_v2: String,
-    ltoken_v2: String,
-    ltmid_v2: String,
-    ltuid_v2: String,
+    pub cookie_token_v2: String,
+    pub account_mid_v2: String,
+    pub account_id_v2: String,
+    pub ltoken_v2: String,
+    pub ltmid_v2: String,
+    pub ltuid_v2: String,
 }
 
 /// Mobile App code login cookies.
+#[derive(Deserialize)]
 pub struct AppLoginResult {
-    stoken: String,
-    ltuid_v2: String,
-    ltmid_v2: String,
-    account_id_v2: String,
-    account_mid_v2: String,
+    pub stoken: String,
+    pub ltuid_v2: String,
+    pub ltmid_v2: String,
+    pub account_id_v2: String,
+    pub account_mid_v2: String,
 }
 
 /// Hoyolab website login cookies.
+#[derive(Deserialize)]
 pub struct WebLoginResult {
-    cookie_token_v2: String,
-    account_mid_v2: String,
-    account_id_v2: String,
-    ltoken_v2: String,
-    ltmid_v2: String,
-    ltuid_v2: String,
+    pub cookie_token_v2: String,
+    pub account_mid_v2: String,
+    pub account_id_v2: String,
+    pub ltoken_v2: String,
+    pub ltmid_v2: String,
+    pub ltuid_v2: String,
 }
 
-/// miyoushi webstie login cookies.
-pub struct CNWebLoginResult {
-    cookie_token_v2: String,
-    account_mid_v2: String,
-    account_id_v2: String,
-    ltoken_v2: String,
-    ltmid_v2: String,
-    ltuid_v2: String,
-}
+pub type CNWebLoginResult = WebLoginResult;
 
 /// Mobile login result, using phone number.
+#[derive(Deserialize)]
 pub struct MobileLoginResult {
-    cookie_token_v2: String,
-    account_mid_v2: String,
-    account_id_v2: String,
-    ltoken_v2: String,
-    ltmid_v2: String,
+    pub cookie_token_v2: String,
+    pub account_mid_v2: String,
+    pub account_id_v2: String,
+    pub ltoken_v2: String,
+    pub ltmid_v2: String,
 }
 
 /// Device grant result.
+#[derive(Deserialize)]
 pub struct DeviceGrantResult {
-    game_token: String,
-    login_ticket: Option<String>,
+    pub game_token: String,
+    pub login_ticket: Option<String>,
 }
 
 /// Gaem login result.
+#[derive(Deserialize)]
 pub struct GameLoginResult {
-    combo_id: String,
-    open_id: String,
-    combo_token: String,
-    heartbeat: bool,
-    account_type: i32,
+    pub combo_id: String,
+    pub open_id: String,
+    pub combo_token: String,
+    pub heartbeat: bool,
+    pub account_type: i32,
 }

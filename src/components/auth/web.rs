@@ -1,19 +1,148 @@
-use reqwest::{header::HeaderMap, Client, Method, Request, Url};
+use std::{collections::HashMap, sync::Arc};
 
-use crate::{utils::{common::{headermap, Region}, routes}, HoyoError};
+use reqwest::Url;
+use reqwest_cookie_store::{CookieStore, CookieStoreMutex, RawCookie};
+use serde_json::json;
 
-struct WebAuthClient<'a> {
+use crate::{
+    client::Client,
+    common::Base,
+    models::auth::{
+        cookie::{CNWebLoginResult, WebLoginResult},
+        geetest::{SessionMMT, SessionMMTResult},
+    },
+    utils::{
+        auth_constants::{CN_LOGIN_HEADERS, WEB_LOGIN_HEADERS},
+        common::{headermap, Region},
+        constants::DsSalt,
+        ds::generate_dynamic_secret,
+        routes,
+    },
+    HoyoError, HoyolabError,
+};
+
+pub(super) struct WebAuthClient<'a> {
     client: &'a Client,
+    store: Arc<CookieStoreMutex>,
 }
 
 impl<'a> WebAuthClient<'a> {
-    fn _cn_web_login(&self, account: &str, password: &str) -> Result<Request, HoyoError> {
-        let mut request = Request::new(
-            Method::POST,
-            // expect because routes are in const as part of library
-            Url::parse(routes::web_login_url(Region::Chinese)).expect("failed to parse url"),
-        );
+    #[inline]
+    pub(super) fn new(client: &'a Client, store: Arc<CookieStoreMutex>) -> WebAuthClient<'a> {
+        Self { client, store }
+    }
 
-        Ok(request)
+    #[inline]
+    #[maybe_async::maybe_async]
+    pub(super) async fn _os_web_login(
+        &self,
+        enc_account: &str,
+        enc_password: &str,
+        mmt_result: Option<SessionMMTResult>,
+        token_type: i32,
+    ) -> Result<WebLoginResult, HoyoError> {
+        let url = routes::web_login_url(Region::Overseas);
+        let mut builder = self.client.post(url).headers(WEB_LOGIN_HEADERS.clone());
+
+        if let Some(mmt) = mmt_result {
+            builder = builder.header("x-rpc-aigis", mmt.get_aigis_header()?);
+        }
+
+        let response = builder
+            .body(format!(
+                r#"{{"account":"{}","password":"{}","token_type":"{}"}}"#,
+                enc_account, enc_password, token_type
+            ))
+            .send()
+            .await?;
+
+        let response_headers = response.headers().clone();
+        let cookies: HashMap<String, String> = response
+            .cookies()
+            .map(|c| (c.name().to_string(), c.value().to_string()))
+            .collect();
+
+        let data = response.json::<Base>().await?;
+
+        if data.retcode == -3101 {
+            // Captcha triggered
+            let aigis_header = response_headers
+                .get("x-rpc-aigis")
+                .expect("Aigis header not found in response.")
+                .to_str()
+                .expect("Could not parse Aigis header");
+
+            let session_mmt: SessionMMT = serde_json::from_str(aigis_header)?;
+            return Err(HoyolabError::Captcha(session_mmt))?;
+        }
+
+        match data.data {
+            Some(data) => {
+                if let Some(token) = data.get("stoken") {
+                    let token = token.to_string();
+                    let cookie = RawCookie::new("stoken", token);
+                    let mut store = self.store.lock().expect("Could not get Cookie store lock");
+                    store.insert_raw(
+                        &cookie,
+                        &Url::parse(url).expect("Failed to parse cookie url"),
+                    );
+                }
+            }
+            None => return Err(HoyolabError::from_code(data.retcode))?,
+        }
+
+        Ok(serde_json::from_value(json!(cookies))?)
+    }
+
+    #[inline]
+    #[maybe_async::maybe_async]
+    pub(super) async fn _cn_web_login(
+        &self,
+        enc_account: &str,
+        enc_password: &str,
+        mmt_result: Option<SessionMMTResult>,
+    ) -> Result<CNWebLoginResult, HoyoError> {
+        let mut builder = self
+            .client
+            .post(routes::web_login_url(Region::Chinese))
+            .headers(CN_LOGIN_HEADERS.clone())
+            .header("ds", generate_dynamic_secret(DsSalt::Chinese));
+
+        if let Some(mmt) = mmt_result {
+            builder = builder.header("x-rpc-aigis", mmt.get_aigis_header()?);
+        }
+
+        let response = builder
+            .body(format!(
+                r#"{{"account":"{}","password":"{}"}}"#,
+                enc_account, enc_password
+            ))
+            .send()
+            .await?;
+
+        let response_headers = response.headers().clone();
+        let cookies: HashMap<String, String> = response
+            .cookies()
+            .map(|c| (c.name().to_string(), c.value().to_string()))
+            .collect();
+
+        let data = response.json::<Base>().await?;
+
+        if data.retcode == -3102 {
+            let aigis_header = response_headers
+                .get("x-rpc-aigis")
+                .expect("Aigis header not found in response.")
+                .to_str()
+                .expect("Could not parse Aigis header");
+
+            let session_mmt: SessionMMT = serde_json::from_str(aigis_header)?;
+            return Err(HoyolabError::Captcha(session_mmt))?;
+        }
+
+        if data.data.is_none() {
+            return Err(HoyolabError::from_code(data.retcode))?;
+        }
+
+        Ok(serde_json::from_value(json!(cookies))?)
     }
 }

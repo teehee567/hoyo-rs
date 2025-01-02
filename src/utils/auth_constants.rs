@@ -1,10 +1,15 @@
 use std::sync::LazyLock;
 
+use base64::{engine::general_purpose, prelude::BASE64_STANDARD, Engine};
+use openssl::rsa::{Padding, Rsa};
 use reqwest::header::HeaderMap;
+use serde::Serialize;
 
-use crate::utils::common::headermap;
+use crate::{utils::common::headermap, HoyoError};
 
-pub(crate) const LOGIN_KEY_TYPE_1: &'static [u8; 452] = b"
+use super::common::Region;
+
+const OS_LOGIN_RSA_KEY: &'static [u8; 452] = b"
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4PMS2JVMwBsOIrYWRluY
 wEiFZL7Aphtm9z5Eu/anzJ09nB00uhW+ScrDWFECPwpQto/GlOJYCUwVM/raQpAj
@@ -16,7 +21,7 @@ KSQP4sM0mZvQ1Sr4UcACVcYgYnCbTZMWhJTWkrNXqI8TMomekgny3y+d6NX/cFa6
 -----END PUBLIC KEY-----
 ";
 
-pub(crate) const LOGIN_KEY_TYPE_2: &'static [u8; 273] = b"
+const CN_LOGIN_RSA_KEY: &'static [u8; 273] = b"
 -----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDvekdPMHN3AYhm/vktJT+YJr7
 cI5DcsNKqdsx5DZX0gDuWFuIjzdwButrIYPNmRJ1G8ybDIF7oDW2eEpm5sMbL9zs
@@ -25,7 +30,38 @@ CgGs52bFoYMtyi+xEQIDAQAB
 -----END PUBLIC KEY-----
 ";
 
+pub(crate) const fn get_rsa_key(region: Region) -> &'static [u8] {
+    match region {
+        Region::Overseas => OS_LOGIN_RSA_KEY,
+        Region::Chinese => OS_LOGIN_RSA_KEY,
+    }
+}
 
+pub(crate) static WEB_LOGIN_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-app_id" => "c9oqaq3s3gu8",
+            "x-rpc-client_type" => "4",
+            // If not equal account.hoyolab.com It's will return retcode 1200 [Unauthorized]
+            "Origin" => "https://account.hoyolab.com",
+            "Referer" => "https://account.hoyolab.com/",
+        }
+    })
+};
+
+pub(crate) static APP_LOGIN_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+        "x-rpc-app_id" => "c9oqaq3s3gu8",
+        "x-rpc-client_type" => "2",
+        // Passing "x-rpc-device_id" header will trigger email verification
+        // (unless the device_id is already verified).
+        //
+        // For some reason, without this header, email verification is not triggered.
+        // "x-rpc-device_id": "1c33337bd45c1bfs",
+            }
+    })
+};
 
 pub(crate) static CN_LOGIN_HEADERS: LazyLock<HeaderMap> = {
     LazyLock::new(|| {
@@ -42,3 +78,111 @@ pub(crate) static CN_LOGIN_HEADERS: LazyLock<HeaderMap> = {
         }
     })
 };
+
+pub(crate) static EMAIL_SEND_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-app_id" => "c9oqaq3s3gu8",
+            "x-rpc-client_type" => "2",
+        }
+    })
+};
+
+pub(crate) static EMAIL_VERIFY_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-app_id" => "c9oqaq3s3gu8",
+            "x-rpc-client_type" => "2",
+        }
+    })
+};
+
+pub(crate) static QRCODE_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-app_id" => "bll8iq97cem8",
+            "x-rpc-client_type" => "4",
+            "x-rpc-game_biz" => "bbs_cn",
+            "x-rpc-device_fp" => "38d7fa104e5d7",
+            "x-rpc-device_id" => "586f1440-856a-4243-8076-2b0a12314197",
+        }
+    })
+};
+
+pub(crate) static OS_MMT_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-challenge_path" => "https://bbs-api-os.hoyolab.com/game_record/app/hkrpg/api/challenge",
+            "x-rpc-app_version" => "2.55.0",
+            "x-rpc-challenge_game" => "6",
+            "x-rpc-client_type" => "5",
+        }
+    })
+};
+
+pub(crate) static CN_MMT_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-app_version" => "2.60.1",
+            "x-rpc-client_type" => "5",
+            "x-rpc-challenge_game" => "6",
+            "x-rpc-page" => "v1.4.1-rpg_#/rpg",
+            "x-rpc-tool-version" => "v1.4.1-rpg",
+        }
+    })
+};
+
+pub(crate) const DEVICE_ID: &'static str = "D6AF5103-D297-4A01-B86A-87F87DS5723E";
+
+pub(crate) static RISKY_CHECK_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-client_type" => "1",
+            "x-rpc-channel_id" => "1",
+        }
+    })
+};
+
+pub(crate) static SHIELD_LOGIN_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-client_type" => "1",
+            "x-rpc-channel_id" => "1",
+            "x-rpc-device_id" => DEVICE_ID,
+        }
+    })
+};
+
+pub(crate) static GRANT_TICKET_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-client_type" => "1",
+            "x-rpc-channel_id" => "1",
+            "x-rpc-device_id" => DEVICE_ID,
+            "x-rpc-language" => "en",
+        }
+    })
+};
+
+pub(crate) static GAME_LOGIN_HEADERS: LazyLock<HeaderMap> = {
+    LazyLock::new(|| {
+        headermap! {
+            "x-rpc-client_type" => "1",
+            "x-rpc-channel_id" => "1",
+            "x-rpc-device_id" => DEVICE_ID,
+        }
+    })
+};
+
+pub(crate) fn hoyo_encrypt(data: &str, region: Region) -> String {
+    let public_key = get_rsa_key(region);
+
+    let pem_public_key = Rsa::public_key_from_pem(public_key).unwrap();
+    let mut buf: Vec<u8> = vec![0; pem_public_key.size() as usize];
+    pem_public_key
+        .public_encrypt(data.as_bytes(), &mut buf, Padding::PKCS1)
+        .unwrap();
+
+    BASE64_STANDARD.encode(&buf)
+}
+
