@@ -37,6 +37,13 @@ impl AuthClient {
         }
     }
 
+    ///Login with a password via web endpoint
+    ///This enpoint is mainly for convenience.
+    ///
+    ///Endpoint is chosen based on client region.
+    ///
+    ///Note that this will start a webserver if captcha is
+    ///triggered and `geetest_solver` is not passed.
     #[maybe_async::maybe_async]
     pub async fn login_with_password(
         &self,
@@ -48,11 +55,21 @@ impl AuthClient {
         let enc_password = hoyo_encrypt(password, self.region);
 
         match self.region {
-            Region::Overseas => self.os_login_with_password(&enc_account, &enc_password, 6, solver).await,
-            Region::Chinese => self.cn_login_with_password(&enc_account, &enc_password, solver).await,
+            Region::Overseas => {
+                self.os_login_with_password(&enc_account, &enc_password, 6, solver)
+                    .await
+            }
+            Region::Chinese => {
+                self.cn_login_with_password(&enc_account, &enc_password, solver)
+                    .await
+            }
         }
     }
 
+    ///Login with a password via web endpoint
+    ///
+    ///Note that this will start a webserver if captcha is
+    ///triggered and `geetest_solver` is not passed.
     #[maybe_async::maybe_async]
     async fn os_login_with_password(
         &self,
@@ -63,7 +80,10 @@ impl AuthClient {
     ) -> Result<WebLoginResult, HoyoError> {
         let client = WebAuthClient::new(&self.client, self.cookie_store.clone());
 
-        match client._os_web_login(enc_account, enc_password, None, token_type).await {
+        match client
+            ._os_web_login(enc_account, enc_password, None, token_type)
+            .await
+        {
             Err(HoyoError::Hoyolab(HoyolabError::Captcha(mmt))) => {
                 let mmt_result = if let Some(solver) = solver {
                     solver.solve(mmt)
@@ -74,11 +94,14 @@ impl AuthClient {
                     ._os_web_login(enc_account, enc_password, Some(mmt_result), token_type)
                     .await
             }
-            other => other
+            other => other,
         }
-
     }
 
+    ///Login with a password via Miyoushi loginByPassword endpoint.
+    ///
+    ///Note that this will start a webserver if captcha is
+    ///triggered and `geetest_solver` is not passed.
     #[maybe_async::maybe_async]
     async fn cn_login_with_password(
         &self,
@@ -99,45 +122,74 @@ impl AuthClient {
                     ._cn_web_login(enc_account, enc_password, Some(mmt_result))
                     .await
             }
-            other => other
+            other => other,
         }
     }
 
+    /// Check if a mobile number is valid (it's registered on Miyoushe).
+    ///
+    /// Returns an option
     #[maybe_async::maybe_async]
-    pub async fn check_mobile_number_validity(&self) {
+    pub async fn check_mobile_number_validity(&self) -> Option<()> {
         todo!()
     }
 
+    /// Login with mobile number, returns cookies..
+    ///
+    /// Only works for Chinese region (Miyoushe) users, do not include
+    /// area code (+86) in hte mobile number.
+    ///
+    /// Steps:
+    /// 1. Sends OTP to the provided mobile number.
+    /// 2. If captcha is triggered, prompts the user to solve it.
+    /// 3. Lets user enter the OTP.
+    /// 4. Logs in with the OTP.
+    /// 5. Returns Cookies.
+    ///
     #[maybe_async::maybe_async]
     pub async fn login_with_mobile_number(&self) {
         todo!()
     }
 
+    /// Login with a password via HoYoLab app endpoint.
+    ///
+    /// Note that this will start a webserver if either of the
+    /// following happens:
+    ///
+    /// 1. Captcha is triggered and `geetest_solver` is not passed.
+    /// 2. Email verification is triggered (can happen if you first
+    ///    login wiht a new device)
+    ///
     #[maybe_async::maybe_async]
     pub async fn login_with_app_password(&self) {
         todo!()
     }
 
+    /// Login with a QR code, only available for Chinese, Miyoushe users.
     #[maybe_async::maybe_async]
     pub async fn login_with_qrcode(&self) {
         todo!()
     }
 
+    /// Creates a geetest challenge.
     #[maybe_async::maybe_async]
     pub async fn create_mmt(&self) {
         todo!()
     }
 
+    /// Verifys a geetest challenge.
     #[maybe_async::maybe_async]
     pub async fn verify_mmt(&self) {
         todo!()
     }
 
+    /// Performs a login to the game endpoint.
     #[maybe_async::maybe_async]
     pub async fn os_game_login(&self) {
         todo!()
     }
 
+    /// Generate an authentic device fingerptint.
     #[maybe_async::maybe_async]
     pub async fn generate_fingerprint(&self) {
         todo!()
@@ -150,6 +202,4 @@ impl AuthClient {
     fn _gen_ext_fields(&self) -> String {
         todo!()
     }
-
-    
 }

@@ -4,13 +4,11 @@
 //! API wrapper for Genshin Impact & Honkai Star Rail.
 
 /// Components for model interaction.
-mod components;
+pub mod components;
 use std::sync::Arc;
 
-pub use components::*;
 
 /// Response models.
-#[allow(missing_docs)]
 pub mod models;
 pub use models::*;
 
