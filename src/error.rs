@@ -10,6 +10,10 @@ pub enum HoyoError {
     #[error("Could not parse language")]
     LanguageParse,
 
+    /// Unexpected Response.
+    #[error("Unexpected Response: {0}")]
+    UnexpectedResponse(String),
+
     /// Hoyolab Response Error.
     #[error(transparent)]
     Hoyolab(#[from] HoyolabError),

@@ -11,7 +11,7 @@ use crate::{
         cookie::{CNWebLoginResult, WebLoginResult},
         geetest::{SessionMMT, SessionMMTResult},
     },
-    utils::{auth_constants::hoyo_encrypt, common::Region},
+    utils::{auth_constants::hoyo_encrypt, common::Region, routes},
     HoyoError, HoyolabError,
 };
 
@@ -128,10 +128,30 @@ impl AuthClient {
 
     /// Check if a mobile number is valid (it's registered on Miyoushe).
     ///
-    /// Returns an option
+    /// Returns Some(()) if mobile number is valid.
     #[maybe_async::maybe_async]
-    pub async fn check_mobile_number_validity(&self) -> Option<()> {
-        todo!()
+    pub async fn check_mobile_number_validity(&self, mobile: u64) -> Result<bool, HoyoError> {
+        let response = self
+            .client
+            .get(routes::CHECK_MOBILE_VALIDITY_URL)
+            .query(&("mobile", mobile.to_string()))
+            .send()
+            .await?;
+
+        let data = response.json::<Base>().await?;
+        
+        if let Some(data) = data.data {
+            let status = data.get("status").unwrap_or_else(|| {
+                return Err(HoyoError::UnexpectedResponse("no status found".to_string()))?;
+            });
+            let is_registable = data.get("is_registable").unwrap_or_else(|| {
+                return Err(HoyoError::UnexpectedResponse("no is_registable found".to_string()))?;
+            });
+            Ok(status != is_registable)
+            
+        } else {
+            Err(HoyolabError::from_code(data.retcode))?
+        }
     }
 
     /// Login with mobile number, returns cookies..
