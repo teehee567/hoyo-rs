@@ -167,7 +167,12 @@ impl AuthClient {
     /// 5. Returns Cookies.
     ///
     #[maybe_async::maybe_async]
-    pub async fn login_with_mobile_number(&self) {
+    pub async fn login_with_mobile_number(&self, mobile: u64) {
+        let client = WebAuthClient::new(&self.client, self.cookie_store.clone());
+        let enc_mobile = hoyo_encrypt(&mobile.to_string(), Region::Chinese);
+        if let Err(HoyoError::Hoyolab(HoyolabError::Captcha(mmt))) = client._send_mobile_otp(&enc_mobile, None).await {
+
+        }
         todo!()
     }
 
