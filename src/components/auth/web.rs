@@ -29,7 +29,7 @@ pub(super) struct WebAuthClient<'a> {
 
 impl<'a> WebAuthClient<'a> {
     #[inline]
-    pub(super) fn new(client: &'a Client, store: Arc<CookieStoreMutex>) -> WebAuthClient<'a> {
+    pub(super) fn new(client: &'a Client, store: Arc<CookieStoreMutex>) -> Self {
         Self { client, store }
     }
 

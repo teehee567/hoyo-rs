@@ -1,7 +1,7 @@
 use reqwest::header::InvalidHeaderValue;
 use thiserror::Error;
 
-use crate::models::auth::geetest::SessionMMT;
+use crate::{auth::verification::ActionTicket, models::auth::geetest::SessionMMT};
 
 /// HoyoApi Error
 #[derive(Debug, Error)]
@@ -98,6 +98,10 @@ pub enum HoyolabError {
     /// Hoyolab captcha triggered.
     #[error("Geetest Triggered")]
     Captcha(SessionMMT),
+
+    /// Hoyolab verify email triggered.
+    #[error("Email Verification Triggered")]
+    EmailVerify(ActionTicket),
 
     /// Redemption code invalid.
     #[error("Redemption code invalid.")]

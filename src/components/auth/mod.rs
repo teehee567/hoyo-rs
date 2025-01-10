@@ -5,6 +5,7 @@ use web::WebAuthClient;
 use zeroize::Zeroizing;
 
 use crate::{
+    auth::cookie::MobileLoginResult,
     client::Client,
     common::Base,
     models::auth::{
@@ -15,7 +16,7 @@ use crate::{
     HoyoError, HoyolabError,
 };
 
-use super::captcha::{CaptchaSolver, DefaultSolver};
+use super::captcha::{CaptchaSolver, DefaultSolver, OTPSource};
 
 mod app;
 mod game;
@@ -139,16 +140,16 @@ impl AuthClient {
             .await?;
 
         let data = response.json::<Base>().await?;
-        
+
         if let Some(data) = data.data {
-            let status = data.get("status").unwrap_or_else(|| {
-                return Err(HoyoError::UnexpectedResponse("no status found".to_string()))?;
-            });
-            let is_registable = data.get("is_registable").unwrap_or_else(|| {
-                return Err(HoyoError::UnexpectedResponse("no is_registable found".to_string()))?;
-            });
+            let status = data
+                .get("status")
+                .ok_or_else(|| HoyoError::UnexpectedResponse("no status found".to_string()))?;
+
+            let is_registable = data.get("is_registable").ok_or_else(|| {
+                HoyoError::UnexpectedResponse("no is_registable found".to_string())
+            })?;
             Ok(status != is_registable)
-            
         } else {
             Err(HoyolabError::from_code(data.retcode))?
         }
@@ -167,13 +168,33 @@ impl AuthClient {
     /// 5. Returns Cookies.
     ///
     #[maybe_async::maybe_async]
-    pub async fn login_with_mobile_number(&self, mobile: u64) {
+    pub async fn login_with_mobile_number(
+        &self,
+        mobile: u64,
+        solver: Option<impl CaptchaSolver + OTPSource>,
+    ) -> Result<MobileLoginResult, HoyoError> {
         let client = WebAuthClient::new(&self.client, self.cookie_store.clone());
         let enc_mobile = hoyo_encrypt(&mobile.to_string(), Region::Chinese);
-        if let Err(HoyoError::Hoyolab(HoyolabError::Captcha(mmt))) = client._send_mobile_otp(&enc_mobile, None).await {
 
+        match client._send_mobile_otp(&enc_mobile, None).await {
+            Err(HoyoError::Hoyolab(HoyolabError::Captcha(mmt))) => {
+                let mmt_result = if let Some(ref solver) = solver {
+                    solver.solve(mmt)
+                } else {
+                    DefaultSolver::new().solve(mmt)
+                };
+                client
+                    ._send_mobile_otp(&enc_mobile, Some(mmt_result))
+                    .await?;
+            }
+            other => other?,
         }
-        todo!()
+        let otp = if let Some(solver) = solver {
+            solver.get_otp()
+        } else {
+            DefaultSolver::new().get_otp()
+        };
+        client._login_with_mobile_otp(&enc_mobile, &otp).await
     }
 
     /// Login with a password via HoYoLab app endpoint.
