@@ -1,15 +1,27 @@
 use std::sync::LazyLock;
 
 use base64::{engine::general_purpose, prelude::BASE64_STANDARD, Engine};
-use openssl::rsa::{Padding, Rsa};
 use reqwest::header::HeaderMap;
+use rsa::{pkcs8::DecodePublicKey, traits::PaddingScheme, Pkcs1v15Encrypt, RsaPublicKey};
 use serde::Serialize;
 
 use crate::{utils::common::headermap, HoyoError};
 
 use super::common::Region;
 
-const OS_LOGIN_RSA_KEY: &'static [u8; 452] = b"
+pub(crate) fn hoyo_encrypt(data: &str, region: Region) -> String {
+    let public_key = RsaPublicKey::from_public_key_pem(get_rsa_key(region))
+        .expect("Could not decode Public Key");
+
+    let mut rng = rand::thread_rng();
+    let enc = public_key
+        .encrypt(&mut rng, Pkcs1v15Encrypt, data.as_bytes())
+        .expect("Failed to encrypt");
+
+    BASE64_STANDARD.encode(&enc)
+}
+
+const OS_LOGIN_RSA_KEY: &'static str = "
 -----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4PMS2JVMwBsOIrYWRluY
 wEiFZL7Aphtm9z5Eu/anzJ09nB00uhW+ScrDWFECPwpQto/GlOJYCUwVM/raQpAj
@@ -21,7 +33,7 @@ KSQP4sM0mZvQ1Sr4UcACVcYgYnCbTZMWhJTWkrNXqI8TMomekgny3y+d6NX/cFa6
 -----END PUBLIC KEY-----
 ";
 
-const CN_LOGIN_RSA_KEY: &'static [u8; 273] = b"
+const CN_LOGIN_RSA_KEY: &'static str = "
 -----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDDvekdPMHN3AYhm/vktJT+YJr7
 cI5DcsNKqdsx5DZX0gDuWFuIjzdwButrIYPNmRJ1G8ybDIF7oDW2eEpm5sMbL9zs
@@ -30,7 +42,7 @@ CgGs52bFoYMtyi+xEQIDAQAB
 -----END PUBLIC KEY-----
 ";
 
-pub(crate) const fn get_rsa_key(region: Region) -> &'static [u8] {
+pub(crate) const fn get_rsa_key(region: Region) -> &'static str {
     match region {
         Region::Overseas => OS_LOGIN_RSA_KEY,
         Region::Chinese => OS_LOGIN_RSA_KEY,
@@ -173,15 +185,3 @@ pub(crate) static GAME_LOGIN_HEADERS: LazyLock<HeaderMap> = {
         }
     })
 };
-
-pub(crate) fn hoyo_encrypt(data: &str, region: Region) -> String {
-    let public_key = get_rsa_key(region);
-
-    let pem_public_key = Rsa::public_key_from_pem(public_key).unwrap();
-    let mut buf: Vec<u8> = vec![0; pem_public_key.size() as usize];
-    pem_public_key
-        .public_encrypt(data.as_bytes(), &mut buf, Padding::PKCS1)
-        .unwrap();
-
-    BASE64_STANDARD.encode(&buf)
-}

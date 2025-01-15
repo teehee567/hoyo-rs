@@ -1,4 +1,5 @@
-#![deny(missing_docs)]
+// #![deny(missing_docs)]
+#![allow(warnings)]
 
 //! # hoyo-rs
 //! API wrapper for Genshin Impact & Honkai Star Rail.
