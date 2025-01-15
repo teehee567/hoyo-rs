@@ -5,10 +5,17 @@ use reqwest_cookie_store::CookieStoreMutex;
 use serde_json::json;
 
 use crate::{
-    auth::{cookie::AppLoginResult, geetest::{SessionMMT, SessionMMTResult}, verification::ActionTicket},
+    auth::{
+        cookie::AppLoginResult,
+        geetest::{SessionMMT, SessionMMTResult},
+        verification::ActionTicket,
+    },
     common::Base,
     utils::{
-        auth_constants::APP_LOGIN_HEADERS, constants::DsSalt, ds::generate_dynamic_secret, routes,
+        auth_constants::{APP_LOGIN_HEADERS, EMAIL_SEND_HEADERS},
+        constants::DsSalt,
+        ds::generate_dynamic_secret,
+        routes,
     },
     HoyoError, HoyolabError,
 };
@@ -89,5 +96,50 @@ impl<'a> AppAuthClient<'a> {
         }
 
         Ok(serde_json::from_value(json!(cookies))?)
+    }
+
+    #[inline]
+    #[maybe_async::maybe_async]
+    pub(super) async fn _send_verification_email(
+        &self,
+        ticket: ActionTicket,
+        mmt_result: Option<SessionMMTResult>,
+    ) -> Result<(), HoyoError> {
+        let mut builder = self
+            .client
+            .post(routes::APP_LOGIN_URL)
+            .headers(EMAIL_SEND_HEADERS.clone())
+            .header("ds", generate_dynamic_secret(DsSalt::AppLogin));
+
+        if let Some(mmt) = mmt_result {
+            builder = builder.header("x-rpc-aigis", mmt.get_aigis_header()?);
+        }
+
+        let response = builder
+            .body(format!(
+                r#"{{"action_type":"verify_for_component","action_ticket":"{}"}}"#,
+                ticket.ticket
+            ))
+            .send()
+            .await?;
+
+        let response_headers = response.headers().clone();
+        let data = response.json::<Base>().await?;
+        
+        if data.retcode == -3101 {
+            let aigis_header = response_headers
+                .get("x-rpc-aigis")
+                .expect("Aigis header not found in response.")
+                .to_str()
+                .expect("Could not parse Aigis header");
+
+            let session_mmt: SessionMMT = serde_json::from_str(aigis_header)?;
+            return Err(HoyolabError::Captcha(session_mmt))?;
+        }
+
+        if data.retcode != 0 {
+            return Err(HoyolabError::from_code(data.retcode))?;
+        }
+        Ok(())
     }
 }

@@ -1,7 +1,5 @@
 use crate::utils::common::Region;
 
-
-
 #[derive(Default, Debug, Clone)]
 pub struct Config {
     pub user_agent: String,

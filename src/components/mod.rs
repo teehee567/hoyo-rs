@@ -1,4 +1,3 @@
-
 /// Auth module
 pub mod auth;
 /// Captcha module

@@ -1,4 +1,3 @@
-
 /// Cookie models.
 #[allow(missing_docs)]
 pub mod cookie;

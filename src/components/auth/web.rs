@@ -44,6 +44,7 @@ impl<'a> WebAuthClient<'a> {
     ) -> Result<WebLoginResult, HoyoError> {
         let url = routes::web_login_url(Region::Overseas);
         let mut builder = self.client.post(url).headers(WEB_LOGIN_HEADERS.clone());
+        
 
         if let Some(mmt) = mmt_result {
             builder = builder.header("x-rpc-aigis", mmt.get_aigis_header()?);

@@ -1,4 +1,3 @@
-
 /// Auth models.
 pub mod auth;
 

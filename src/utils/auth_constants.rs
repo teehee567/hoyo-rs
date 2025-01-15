@@ -185,4 +185,3 @@ pub(crate) fn hoyo_encrypt(data: &str, region: Region) -> String {
 
     BASE64_STANDARD.encode(&buf)
 }
-

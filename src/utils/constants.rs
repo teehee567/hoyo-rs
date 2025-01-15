@@ -6,7 +6,6 @@ use crate::{
     HoyoError,
 };
 
-
 #[derive()]
 pub enum Lang {
     ZhCn,
@@ -66,7 +65,6 @@ impl Lang {
             Self::ViVn => "vi",
             Self::TrTr => "tr",
         }
-
     }
 }
 

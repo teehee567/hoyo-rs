@@ -1,16 +1,15 @@
-use crate::utils::common::{Region, Game};
+use crate::utils::common::{Game, Region};
 
 macro_rules! international_route {
     ($name:ident, $overseas:expr, $chinese:expr) => {
         pub const fn $name(region: Region) -> &'static str {
             match region {
                 Region::Overseas => $overseas,
-                Region::Chinese  => $chinese,
+                Region::Chinese => $chinese,
             }
         }
     };
 }
-
 
 macro_rules! game_route {
     (
@@ -30,97 +29,125 @@ macro_rules! game_route {
 pub const WIKI_URL: &str = "https://sg-wiki-api.hoyolab.com/hoyowiki/wapi";
 pub const GET_USER_REGION_URL: &str = "https://api-account-os.hoyoverse.com/account/binding/api/getUserGameRolesOfRegionByCookieToken";
 pub const MIMO_URL: &str = "https://sg-public-api.hoyolab.com/event/e2023mimotravel";
-pub const CALCULATOR_REFERER_URL: &str = "https://webstatic.mihoyo.com/ys/event/e20200923adopt_calculator/index.html";
+pub const CALCULATOR_REFERER_URL: &str =
+    "https://webstatic.mihoyo.com/ys/event/e20200923adopt_calculator/index.html";
 pub const HK4E_URL: &str = "https://sg-hk4e-api.hoyoverse.com/common/hk4e_global/";
 pub const ZZZ_URL: &str = "https://sg-announcement-static.hoyoverse.com/common/nap_global/";
 pub const HKRPG_URL: &str = "https://sg-hkrpg-api.hoyoverse.com/common/hkrpg_global/";
 
-pub const COOKIE_V2_REFRESH_URL: &str = "https://sg-public-api.hoyoverse.com/account/ma-passport/token/getBySToken";
-pub const GET_STOKEN_BY_GAME_TOKEN_URL: &str = "https://passport-api.mihoyo.com/account/ma-cn-session/app/getTokenByGameToken";
-pub const GET_COOKIE_TOKEN_BY_GAME_TOKEN_URL: &str = "https://api-takumi.mihoyo.com/auth/api/getCookieAccountInfoByGameToken";
-pub const CN_GET_COOKIE_TOKEN_BY_STOKEN_URL: &str = "https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken";
+pub const COOKIE_V2_REFRESH_URL: &str =
+    "https://sg-public-api.hoyoverse.com/account/ma-passport/token/getBySToken";
+pub const GET_STOKEN_BY_GAME_TOKEN_URL: &str =
+    "https://passport-api.mihoyo.com/account/ma-cn-session/app/getTokenByGameToken";
+pub const GET_COOKIE_TOKEN_BY_GAME_TOKEN_URL: &str =
+    "https://api-takumi.mihoyo.com/auth/api/getCookieAccountInfoByGameToken";
+pub const CN_GET_COOKIE_TOKEN_BY_STOKEN_URL: &str =
+    "https://passport-api.mihoyo.com/account/auth/api/getCookieAccountInfoBySToken";
 
-pub const APP_LOGIN_URL: &str = "https://sg-public-api.hoyoverse.com/account/ma-passport/api/appLoginByPassword";
+pub const APP_LOGIN_URL: &str =
+    "https://sg-public-api.hoyoverse.com/account/ma-passport/api/appLoginByPassword";
 
-pub const SEND_VERIFICATION_CODE_URL: &str = "https://sg-public-api.hoyoverse.com/account/ma-verifier/api/createEmailCaptchaByActionTicket";
-pub const VERIFY_EMAIL_URL: &str = "https://sg-public-api.hoyoverse.com/account/ma-verifier/api/verifyActionTicketPartly";
+pub const SEND_VERIFICATION_CODE_URL: &str =
+    "https://sg-public-api.hoyoverse.com/account/ma-verifier/api/createEmailCaptchaByActionTicket";
+pub const VERIFY_EMAIL_URL: &str =
+    "https://sg-public-api.hoyoverse.com/account/ma-verifier/api/verifyActionTicketPartly";
 
-pub const CHECK_MOBILE_VALIDITY_URL: &str = "https://webapi.account.mihoyo.com/Api/is_mobile_registrable";
-pub const MOBILE_OTP_URL: &str = "https://passport-api.miyoushe.com/account/ma-cn-verifier/verifier/createLoginCaptcha";
-pub const MOBILE_LOGIN_URL: &str = "https://passport-api.miyoushe.com/account/ma-cn-passport/web/loginByMobileCaptcha";
+pub const CHECK_MOBILE_VALIDITY_URL: &str =
+    "https://webapi.account.mihoyo.com/Api/is_mobile_registrable";
+pub const MOBILE_OTP_URL: &str =
+    "https://passport-api.miyoushe.com/account/ma-cn-verifier/verifier/createLoginCaptcha";
+pub const MOBILE_LOGIN_URL: &str =
+    "https://passport-api.miyoushe.com/account/ma-cn-passport/web/loginByMobileCaptcha";
 
-pub const CREATE_QRCODE_URL: &str = "https://passport-api.miyoushe.com/account/ma-cn-passport/web/createQRLogin";
-pub const CHECK_QRCODE_URL: &str = "https://passport-api.miyoushe.com/account/ma-cn-passport/web/queryQRLoginStatus";
+pub const CREATE_QRCODE_URL: &str =
+    "https://passport-api.miyoushe.com/account/ma-cn-passport/web/createQRLogin";
+pub const CHECK_QRCODE_URL: &str =
+    "https://passport-api.miyoushe.com/account/ma-cn-passport/web/queryQRLoginStatus";
 
-pub const VERIFY_MMT_URL: &str = "https://sg-public-api.hoyolab.com/event/toolcomsrv/risk/verifyGeetest";
+pub const VERIFY_MMT_URL: &str =
+    "https://sg-public-api.hoyolab.com/event/toolcomsrv/risk/verifyGeetest";
 
 pub const ZZZ_LEDGER_URL: &str = "https://sg-public-api.hoyolab.com/event/nap_ledger";
 
-international_route!(web_login_url,
+international_route!(
+    web_login_url,
     "https://sg-public-api.hoyolab.com/account/ma-passport/api/webLoginByPassword",
     "https://passport-api.miyoushe.com/account/ma-cn-passport/web/loginByPassword"
 );
 
-international_route!(webstatic_url, 
+international_route!(
+    webstatic_url,
     "https://operation-webstatic.hoyoverse.com/",
     "https://operation-webstatic.mihoyo.com/"
 );
 
-international_route!(webapi_url,
+international_route!(
+    webapi_url,
     "https://webapi-os.account.hoyoverse.com/Api/",
     "https://webapi.account.mihoyo.com/Api/"
 );
 
-international_route!(account_url,
+international_route!(
+    account_url,
     "https://api-account-os.hoyolab.com/account/auth/api",
     "https://api-takumi.mihoyo.com/account/auth/api/"
 );
 
-international_route!(bbs_url,
+international_route!(
+    bbs_url,
     "https://bbs-api-os.hoyolab.com/",
     "https://bbs-api.mihoyo.com/"
 );
 
-international_route!(bbs_referer_url,
+international_route!(
+    bbs_referer_url,
     "https://www.hoyolab.com/",
     "https://bbs.mihoyo.com/"
 );
 
-international_route!(takumi_url,
+international_route!(
+    takumi_url,
     "https://api-os-takumi.mihoyo.com/",
     "https://api-takumi.mihoyo.com/"
 );
 
-international_route!(community_url,
+international_route!(
+    community_url,
     "https://bbs-api-os.hoyolab.com/community/",
     "https://api-takumi-record.mihoyo.com/community/"
 );
 
-international_route!(card_wapi_url,
+international_route!(
+    card_wapi_url,
     "https://bbs-api-os.hoyolab.com/game_record/card/wapi",
     "https://api-takumi-record.mihoyo.com/game_record/app/card/wapi"
 );
-international_route!(lineup_url,
+international_route!(
+    lineup_url,
     "https://sg-public-api.hoyoverse.com/event/simulatoros/",
     "https://api-takumi.mihoyo.com/event/platsimulator/"
 );
 
-international_route!(calculator_url,
+international_route!(
+    calculator_url,
     "https://sg-public-api.hoyoverse.com/event/calculateos/",
     "https://api-takumi.mihoyo.com/event/e20200928calculate/v1/"
 );
 
-international_route!(get_fp_url,
+international_route!(
+    get_fp_url,
     "https://sg-public-data-api.hoyoverse.com/device-fp/api/getFp",
     "https://public-data-api.mihoyo.com/device-fp/api/getFp"
 );
 
-international_route!(teapot_url,
+international_route!(
+    teapot_url,
     "https://sg-hk4e-api.hoyolab.com/event/e20221121ugcos/",
     ""
 );
 
-international_route!(ysulog_url,
+international_route!(
+    ysulog_url,
     "https://hk4e-api-os.hoyoverse.com/common/hk4e_self_help_query/User/",
     "https://hk4e-api.mihoyo.com/common/hk4e_self_help_query/User/"
 );
@@ -130,17 +157,20 @@ international_route!(create_mmt_url,
     "https://api-takumi-record.mihoyo.com/game_record/app/card/wapi/createVerification?is_high=false"
 );
 
-international_route!(game_risky_check_url,
+international_route!(
+    game_risky_check_url,
     "https://api-account-os.hoyoverse.com/account/risky/api/check",
     "https://gameapi-account.mihoyo.com/account/risky/api/check"
 );
 
-international_route!(pre_grant_ticket_url,
+international_route!(
+    pre_grant_ticket_url,
     "https://api-account-os.hoyoverse.com/account/device/api/preGrantByTicket",
     "https://gameapi-account.mihoyo.com/account/device/api/preGrantByTicket"
 );
 
-international_route!(device_grant_url,
+international_route!(
+    device_grant_url,
     "https://api-account-os.hoyoverse.com/account/device/api/grant",
     "https://gameapi-account.mihoyo.com/account/device/api/grant"
 );

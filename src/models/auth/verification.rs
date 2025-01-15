@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 pub struct ActionTicket {
     risk_ticket: String,
     verify_str: String,
-    ticket: String,
+    pub(crate) ticket: String,
 }
 
 impl ActionTicket {

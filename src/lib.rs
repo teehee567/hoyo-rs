@@ -7,7 +7,6 @@
 pub mod components;
 use std::sync::Arc;
 
-
 /// Response models.
 pub mod models;
 pub use models::*;
@@ -48,7 +47,11 @@ impl Hoyo {
             .cookie_provider(cookie_store.clone())
             .build()
             .expect("failed to build Request client");
-        Self { config, client, cookie_store}
+        Self {
+            config,
+            client,
+            cookie_store,
+        }
     }
 
     /// Creates an authentication client
