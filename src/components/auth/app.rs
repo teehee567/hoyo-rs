@@ -8,11 +8,14 @@ use crate::{
     auth::{
         cookie::AppLoginResult,
         geetest::{SessionMMT, SessionMMTResult},
+        qrcode::{QRCodeCreationResult, QRCodeStatus},
         verification::ActionTicket,
     },
     common::Base,
     utils::{
-        auth_constants::{APP_LOGIN_HEADERS, EMAIL_SEND_HEADERS},
+        auth_constants::{
+            APP_LOGIN_HEADERS, EMAIL_SEND_HEADERS, EMAIL_VERIFY_HEADERS, QRCODE_HEADERS,
+        },
         constants::DsSalt,
         ds::generate_dynamic_secret,
         routes,
@@ -107,9 +110,8 @@ impl<'a> AppAuthClient<'a> {
     ) -> Result<(), HoyoError> {
         let mut builder = self
             .client
-            .post(routes::APP_LOGIN_URL)
-            .headers(EMAIL_SEND_HEADERS.clone())
-            .header("ds", generate_dynamic_secret(DsSalt::AppLogin));
+            .post(routes::SEND_VERIFICATION_CODE_URL)
+            .headers(EMAIL_SEND_HEADERS.clone());
 
         if let Some(mmt) = mmt_result {
             builder = builder.header("x-rpc-aigis", mmt.get_aigis_header()?);
@@ -125,7 +127,7 @@ impl<'a> AppAuthClient<'a> {
 
         let response_headers = response.headers().clone();
         let data = response.json::<Base>().await?;
-        
+
         if data.retcode == -3101 {
             let aigis_header = response_headers
                 .get("x-rpc-aigis")
@@ -141,5 +143,85 @@ impl<'a> AppAuthClient<'a> {
             return Err(HoyolabError::from_code(data.retcode))?;
         }
         Ok(())
+    }
+
+    #[inline]
+    #[maybe_async::maybe_async]
+    pub(super) async fn _verify_email(
+        &self,
+        code: &str,
+        ticket: ActionTicket,
+    ) -> Result<(), HoyoError> {
+        let mut builder = self
+            .client
+            .post(routes::VERIFY_EMAIL_URL)
+            .headers(EMAIL_VERIFY_HEADERS.clone());
+
+        let response = builder
+            .body(format!(
+                r#"{{"action_type":"verify_for_component","action_ticket":"{}","email_captcha":"{}","verify_method":2}}"#,
+                ticket.ticket, code
+            ))
+            .send()
+            .await?;
+
+        let data = response.json::<Base>().await?;
+        if data.retcode != 0 {
+            return Err(HoyolabError::from_code(data.retcode))?;
+        }
+        Ok(())
+    }
+
+    #[inline]
+    #[maybe_async::maybe_async]
+    pub(super) async fn _create_qrcode(&self) -> Result<QRCodeCreationResult, HoyoError> {
+        let mut builder = self
+            .client
+            .post(routes::CREATE_QRCODE_URL)
+            .headers(QRCODE_HEADERS.clone());
+
+        let response = builder.send().await?;
+
+        let data = response.json::<Base>().await?;
+
+        if data.data.is_none() {
+            return Err(HoyolabError::from_code(data.retcode))?;
+        }
+
+        if let Some(data) = data.data {
+            Ok(serde_json::from_value(data)?)
+        } else {
+            Err(HoyolabError::from_code(data.retcode))?
+        }
+    }
+
+    #[inline]
+    #[maybe_async::maybe_async]
+    pub(super) async fn _check_qrcode(&self, ticket: &str) -> Result<QRCodeStatus, HoyoError> {
+        let mut builder = self
+            .client
+            .post(routes::CREATE_QRCODE_URL)
+            .headers(QRCODE_HEADERS.clone());
+
+        let response = builder
+            .body(format!(r#"{{"ticket":{}}}"#, ticket))
+            .send()
+            .await?;
+
+        let data = response.json::<Base>().await?;
+
+        if data.data.is_none() {
+            return Err(HoyolabError::from_code(data.retcode))?;
+        }
+
+        if let Some(mut data) = data.data {
+            Ok(serde_json::from_value(
+                data.get_mut("status")
+                    .ok_or_else(|| HoyolabError::CouldNotGetStatus)?
+                    .take(),
+            )?)
+        } else {
+            Err(HoyolabError::from_code(data.retcode))?
+        }
     }
 }

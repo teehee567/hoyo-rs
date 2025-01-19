@@ -165,6 +165,10 @@ pub enum HoyolabError {
     #[error("Reward already claimed.")]
     RewardAlreadyClaimed,
 
+    /// Could not get status
+    #[error("Could not get status")]
+    CouldNotGetStatus,
+
     /// Unknown error
     #[error("Unknown error code: {0}")]
     UnknownError(i32),
