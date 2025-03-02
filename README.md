@@ -1,7 +1,5 @@
 # hoyo-rs
 
-# Currently in pre 1.0 check branches for development
-
 A Rust library for interacting with the Hoyo-lab API for Genshin Impact, Honkai Impact 3rd, and other Hoyoverse games.
 
 [![Crates.io](https://img.shields.io/crates/v/hoyo-rs)](https://crates.io/crates/hoyo-rs)
